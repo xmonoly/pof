@@ -3537,6 +3537,7 @@ bridge_configure_remotes(struct bridge *br,
     size_t n_controllers;
 
     enum ofproto_fail_mode fail_mode;
+    enum ofproto_work_mode work_mode;
 
     struct ofproto_controller *ocs;
     size_t n_ocs;
@@ -3633,6 +3634,17 @@ bridge_configure_remotes(struct bridge *br,
                     ? OFPROTO_FAIL_STANDALONE
                     : OFPROTO_FAIL_SECURE;
     ofproto_set_fail_mode(br->ofproto, fail_mode);
+
+    //ljx
+    /* Set the work-mode. */
+    work_mode = !br->cfg->work_mode
+                 || !strcmp(br->cfg->work_mode, "ovs")
+                     ? OFPROTO_WORK_OVS
+                     : OFPROTO_WORK_POF;
+    VLOG_WARN("ljx work_mode=%d",work_mode);
+    //ofproto_set_work_mode(br->ofproto, work_mode);
+    //ljx
+
 
     /* Configure OpenFlow controller connection snooping. */
     if (!ofproto_has_snoops(br->ofproto)) {

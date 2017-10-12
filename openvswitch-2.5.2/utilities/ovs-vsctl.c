@@ -130,6 +130,7 @@ static size_t allocated_neoteric_ifaces;
 int
 main(int argc, char *argv[])
 {
+    //VLOG_WARN("ljx ovs-vsctl main");
     extern struct vlog_module VLM_reconnect;
     struct ovsdb_idl *idl;
     struct ctl_command *commands;
@@ -256,6 +257,7 @@ parse_options(int argc, char *argv[], struct shash *local_options)
         int c;
 
         c = getopt_long(argc, argv, short_options, options, &idx);
+        //VLOG_WARN("ljx parse_options c=%d",c);
         if (c == -1) {
             break;
         }
@@ -712,6 +714,7 @@ pre_get_info(struct ctl_context *ctx)
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_name);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_controller);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_fail_mode);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_work_mode);   //ljx
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_ports);
 
     ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_name);
@@ -994,6 +997,7 @@ static struct cmd_show_table cmd_show_tables[] = {
      &ovsrec_bridge_col_name,
      {&ovsrec_bridge_col_controller,
       &ovsrec_bridge_col_fail_mode,
+      &ovsrec_bridge_col_work_mode,   //ljx
       &ovsrec_bridge_col_ports},
      {NULL, NULL, NULL}
     },
@@ -1041,6 +1045,9 @@ pre_cmd_emer_reset(struct ctl_context *ctx)
 
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_controller);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_fail_mode);
+
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_work_mode); //ljx
+    
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_mirrors);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_netflow);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_sflow);
@@ -1082,6 +1089,7 @@ cmd_emer_reset(struct ctl_context *ctx)
 
         ovsrec_bridge_set_controller(br, NULL, 0);
         ovsrec_bridge_set_fail_mode(br, NULL);
+        ovsrec_bridge_set_work_mode(br, NULL);  //ljx
         ovsrec_bridge_set_mirrors(br, NULL, 0);
         ovsrec_bridge_set_netflow(br, NULL);
         ovsrec_bridge_set_sflow(br, NULL);
@@ -1901,7 +1909,6 @@ cmd_del_fail_mode(struct ctl_context *ctx)
 
     ovsrec_bridge_set_fail_mode(br->br_cfg, NULL);
 }
-
 static void
 cmd_set_fail_mode(struct ctl_context *ctx)
 {
@@ -1919,7 +1926,57 @@ cmd_set_fail_mode(struct ctl_context *ctx)
 
     ovsrec_bridge_set_fail_mode(br->br_cfg, fail_mode);
 }
+//ljx
+static void
+cmd_get_work_mode(struct ctl_context *ctx)
+{
+    struct vsctl_context *vsctl_ctx = vsctl_context_cast(ctx);
+    struct vsctl_bridge *br;
+    const char *work_mode;
 
+    vsctl_context_populate_cache(ctx);
+    br = find_bridge(vsctl_ctx, ctx->argv[1], true);
+
+    if (br->parent) {
+        br = br->parent;
+    }
+    ovsrec_bridge_verify_work_mode(br->br_cfg);
+
+    work_mode = br->br_cfg->work_mode;
+    if (work_mode && strlen(work_mode)) {
+        ds_put_format(&ctx->output, "%s\n", work_mode);
+    }
+}
+static void
+cmd_del_work_mode(struct ctl_context *ctx)
+{
+    struct vsctl_context *vsctl_ctx = vsctl_context_cast(ctx);
+    struct vsctl_bridge *br;
+
+    vsctl_context_populate_cache(ctx);
+
+    br = find_real_bridge(vsctl_ctx, ctx->argv[1], true);
+
+    ovsrec_bridge_set_work_mode(br->br_cfg, NULL);
+}
+static void
+cmd_set_work_mode(struct ctl_context *ctx)
+{
+    struct vsctl_context *vsctl_ctx = vsctl_context_cast(ctx);
+    struct vsctl_bridge *br;
+    const char *work_mode = ctx->argv[2];
+
+    vsctl_context_populate_cache(ctx);
+
+    br = find_real_bridge(vsctl_ctx, ctx->argv[1], true);
+
+    if (strcmp(work_mode, "ovs") && strcmp(work_mode, "pof")) {
+        ctl_fatal("work-mode must be \"ovs\" or \"pof\"");
+    }
+
+    ovsrec_bridge_set_work_mode(br->br_cfg, work_mode);
+}
+//ljx
 static void
 verify_managers(const struct ovsrec_open_vswitch *ovs)
 {
@@ -2750,6 +2807,14 @@ static const struct ctl_command_syntax vsctl_commands[] = {
      "", RW},
     {"set-fail-mode", 2, 2, "BRIDGE MODE", pre_get_info, cmd_set_fail_mode,
      NULL, "", RW},
+     //ljx
+    {"get-work-mode", 1, 1, "BRIDGE", pre_get_info, cmd_get_work_mode, NULL,
+     "", RO},
+    {"del-work-mode", 1, 1, "BRIDGE", pre_get_info, cmd_del_work_mode, NULL,
+     "", RW},
+    {"set-work-mode", 2, 2, "BRIDGE MODE", pre_get_info, cmd_set_work_mode,
+     NULL, "", RW},    
+     //ljx
 
     /* Manager commands. */
     {"get-manager", 0, 0, "", pre_manager, cmd_get_manager, NULL, "", RO},

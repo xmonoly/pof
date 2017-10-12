@@ -199,6 +199,12 @@ enum ofproto_fail_mode {
     OFPROTO_FAIL_STANDALONE     /* Act as a standalone switch. */
 };
 
+//ljx
+enum ofproto_work_mode{
+    OFPROTO_WORK_OVS,       
+    OFPROTO_WORK_POF     
+};
+//ljx
 enum ofproto_band {
     OFPROTO_IN_BAND,            /* In-band connection to controller. */
     OFPROTO_OUT_OF_BAND         /* Out-of-band connection to controller. */

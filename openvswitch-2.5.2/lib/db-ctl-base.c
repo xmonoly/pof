@@ -1519,6 +1519,9 @@ static void
 parse_command(int argc, char *argv[], struct shash *local_options,
               struct ctl_command *command)
 {
+    //parse_command(i - start, &argv[start], local_options,
+    //                          &commands[n_commands++]);
+    //VLOG_WARN("ljx parse_commands");
     const struct ctl_command_syntax *p;
     struct shash_node *node;
     int n_arg;
@@ -1530,7 +1533,7 @@ parse_command(int argc, char *argv[], struct shash *local_options,
         const char *option = argv[i];
         const char *equals;
         char *key, *value;
-
+        //VLOG_WARN("ljx parse_commands option=%s",option);
         if (option[0] != '-') {
             break;
         }
@@ -1877,6 +1880,7 @@ struct ctl_command *
 ctl_parse_commands(int argc, char *argv[], struct shash *local_options,
                    size_t *n_commandsp)
 {
+    //VLOG_WARN("ljx ctl_parse_commands");
     struct ctl_command *commands;
     size_t n_commands, allocated_commands;
     int i, start;
@@ -1885,7 +1889,9 @@ ctl_parse_commands(int argc, char *argv[], struct shash *local_options,
     n_commands = allocated_commands = 0;
 
     for (start = i = 0; i <= argc; i++) {
-        if (i == argc || !strcmp(argv[i], "--")) {
+
+        if (i == argc || !strcmp(argv[i], "--")) {    //end of the command or "--"connect next commands
+            //VLOG_WARN("ljx ctl_parse_commands true i=%d",i);
             if (i > start) {
                 if (n_commands >= allocated_commands) {
                     struct ctl_command *c;
@@ -1896,6 +1902,7 @@ ctl_parse_commands(int argc, char *argv[], struct shash *local_options,
                         shash_moved(&c->options);
                     }
                 }
+                //VLOG_WARN("ljx ctl_parse_commands true i-start=%d",i-start);
                 parse_command(i - start, &argv[start], local_options,
                               &commands[n_commands++]);
             } else if (!shash_is_empty(local_options)) {

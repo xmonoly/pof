@@ -617,6 +617,22 @@
         </p>
       </column>
 
+
+      <column name="work_mode">
+        <p>You can choose one of the work modes in ovs or pof:
+        <dl>
+          <dt><code>ovs</code></dt>
+          <dd>the normal work mode.</dd>
+          <dt><code>pof</code></dt>
+          <dd>Open vSwitch will support the work mode of pof.</dd>
+        </dl>
+        </p>
+        <p>
+          The default is <code>ovs</code> if the value is unset, but
+          future versions of Open vSwitch may change the default.
+        </p>
+      </column>
+
       <column name="datapath_id">
         Reports the OpenFlow datapath ID in use.  Exactly 16 hex digits.
         (Setting this column has no useful effect.  Set <ref
